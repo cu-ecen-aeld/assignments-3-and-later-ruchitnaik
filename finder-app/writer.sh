@@ -1,4 +1,7 @@
 #!/bin/bash
+# AESD - Assignment 1
+# Author: Ruchit Naik
+# 1/13/22
 
 #Validate if less arguments passed
 if [ $# -lt 2 ]
@@ -7,17 +10,21 @@ then
 	exit 1
 fi
 
+# Assign arguments to variables
+writefile=$1
+writestr=$2
+
 #make the directory as per the argument 1
-mkdir -p ${1%/*}
+mkdir -p ${writefile%/*}
 #make the file specificed in thr argument 1 path
-touch $1
+touch $writefile
 
 #Handle error if file not created from the previous step
-if [ ! -f $1 ]
+if [ ! -f $writefile ]
 then
-	echo Error: $1 file not created
+	echo Error: $writefile file not created
 	exit 1
 fi
 
 #Write the new file or overwrite the existing file
-echo $2 > $1
+echo $writestr > $writefile
