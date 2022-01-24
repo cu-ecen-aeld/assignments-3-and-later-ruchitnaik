@@ -20,7 +20,6 @@ int main(int argc, char **argv){
 
 	//Check valid number of arguments passed
 	if(argc != REQ_ARG){
-		printf("Error: Insufficint arguments entered\n");
 		syslog(LOG_ERR, "ERROR: Insufficient arguments passed. Enter valid arguments <file path><string>");
 		closelog();					//Close log
 		return 1;
@@ -32,14 +31,13 @@ int main(int argc, char **argv){
 	//Open file considering the file or directory already exits
 	FILE *file_open = fopen(filep, "w");
 	if(file_open == NULL){
-		printf("ERROR: Unable to open file \%s\n", filep);
 		syslog(LOG_ERR, "Unable to open file \%s", filep);
 		closelog();					//Close log
 		return 1;
 	}
 
 	if(filep[0] == ' '){
-		syslog(LOG_ERR, "ERROR: Empty file path passed.");
+		syslog(LOG_ERR, "ERROR: Invalid file path entered.");
 		closelog();					//Close log
 		fclose(file_open);				//Close file on error
 		return 1;
