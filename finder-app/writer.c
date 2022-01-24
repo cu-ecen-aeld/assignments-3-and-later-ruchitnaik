@@ -21,7 +21,9 @@ int main(int argc, char **argv){
 	//Check valid number of arguments passed
 	if(argc != REQ_ARG){
 		printf("Error: Insufficint arguments entered\n");
-		syslog(LOG_ERR, "ERROR: Insufficinet arguments passed. Enter valid arguments <file path><string>");
+		syslog(LOG_ERR, "ERROR: Insufficient arguments passed. Enter valid arguments <file path><string>");
+		closelog();					//Close log
+		return 1;
 	}
 
 	char *filep = argv[1];
@@ -32,11 +34,13 @@ int main(int argc, char **argv){
 	if(file_open == NULL){
 		printf("ERROR: Unable to open file \%s\n", filep);
 		syslog(LOG_ERR, "Unable to open file \%s", filep);
+		closelog();					//Close log
 		return 1;
 	}
 
 	if(filep[0] == ' '){
 		syslog(LOG_ERR, "ERROR: Empty file path passed.");
+		closelog();					//Close log
 		fclose(file_open);				//Close file on error
 		return 1;
 	}
@@ -46,10 +50,12 @@ int main(int argc, char **argv){
 	//Writing the string to the file
 	if((fputs(string, file_open)) < 0){			//Error check
 		syslog(LOG_ERR, "ERROR: Failed to write the file \%s", filep);
+		closelog();					//Close log
 		fclose(file_open);				//Close file
 		return 1;
 	}
 
+	closelog();						//Close log
 	fclose(file_open);					//Close file after successfully writing the string
 	return 0;
 }
