@@ -55,7 +55,7 @@ if [ ! -e ${OUTDIR}/linux-stable/arch/${ARCH}/boot/Image ]; then
     
     #Building vmlinux target
     echo "Building kernel image for booting with QEMU"
-    make -j4 ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} all
+    make -j16 ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} all
     
     #Building modules and devicetree for kernel
     echo "Building kernel modules"

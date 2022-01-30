@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # AESD - Assignment 1
 # Author: Ruchit Naik
 # 1/13/22
