@@ -19,14 +19,16 @@ fi
 WRITER_BIN="writer"
 #find path for writer binary
 path=$(which writer)
-if [ -z $path ]; then
+if [ -z "$path" ]
+then
 	WRITER_BIN="./writer"
 fi
 
 FINDER_BIN="finder.sh"
 #find path for finder.sh script
 path=$(which finder.sh)
-if [ -z $path ]; then
+if [ -z "$path" ]
+then
 	FINDER_BIN="./finder.sh"
 fi
 
@@ -67,10 +69,10 @@ fi
 
 for i in $( seq 1 $NUMFILES)
 do
-	$(WRITER_BIN) "$WRITEDIR/${username}$i.txt" "$WRITESTR"
+	${WRITER_BIN} "$WRITEDIR/${username}$i.txt" "$WRITESTR"
 done
 
-OUTPUTSTRING=$($(FINDER_BIN) "$WRITEDIR" "$WRITESTR")
+OUTPUTSTRING=$(${FINDER_BIN} "$WRITEDIR" "$WRITESTR")
 
 #write the output of the finder command to /tmp/assignment-4-result.txt
 echo ${OUTPUTSTRING} > /tmp/assignment-4-result.txt
