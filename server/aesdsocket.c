@@ -162,13 +162,29 @@ int main(int argc, char **argv){
 		return -1;
 	}
 
-	ret = bind(fd_socket, res->ai_addr, res->ai_addrlen);
-	if(ret == -1){
+	struct addrinfo *p;
+	bool bind_flag = false;
+	for(p=res; p!=NULL; p=p->ai_next){
+		ret = bind(fd_socket, res->ai_addr, res->ai_addrlen);
+		if(ret != 1){
+			bind_flag = true;
+		}
+	}
+
+	if(!bind_flag){
 		syslog(LOG_ERR, "Error bind: %d - %s", errno, strerror(errno));
 		closelog();
 		close(fd_socket);
 		return -1;
 	}
+
+	// ret = bind(fd_socket, res->ai_addr, res->ai_addrlen);
+	// if(ret == -1){
+	// 	syslog(LOG_ERR, "Error bind: %d - %s", errno, strerror(errno));
+	// 	closelog();
+	// 	close(fd_socket);
+	// 	return -1;
+	// }
 
 	freeaddrinfo(res); 							// all done with this structure
 	
