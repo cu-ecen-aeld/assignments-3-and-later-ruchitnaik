@@ -209,7 +209,8 @@ int main(int argc, char **argv){
 
 	//Daemonize after binded to port 9000
 	if((argc == 2) && (strcmp("-d", argv[1]) == 0)){
-		daemonize();
+		// daemonize();
+		daemon(0,0);
 	}
 
 	while(1){											//accept loop to listen forever
