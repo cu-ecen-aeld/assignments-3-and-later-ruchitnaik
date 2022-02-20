@@ -165,9 +165,10 @@ int main(int argc, char **argv){
 	struct addrinfo *p;
 	bool bind_flag = false;
 	for(p=res; p!=NULL; p=p->ai_next){
-		ret = bind(fd_socket, res->ai_addr, res->ai_addrlen);
+		ret = bind(fd_socket, p->ai_addr, p->ai_addrlen);
 		if(ret != 1){
 			bind_flag = true;
+			break;
 		}
 	}
 
