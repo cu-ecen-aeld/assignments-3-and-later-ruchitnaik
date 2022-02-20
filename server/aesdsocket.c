@@ -147,7 +147,7 @@ int main(int argc, char **argv){
 	}
 	
 	//Creating an socket endpoint for communication using IPv4 by socket streaming
-	fd_socket = socket(PF_INET, SOCK_STREAM, 0);
+	fd_socket = socket(AF_INET, SOCK_STREAM, 0);
 	if(fd_socket == -1){
 		syslog(LOG_ERR, "Error opening socket: %d", errno);
 		closelog();
