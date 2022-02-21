@@ -124,6 +124,8 @@ int main(int argc, char **argv){
 	//Setup syslog logging for the utility using LOG_USER
 	openlog(NULL, 0, LOG_USER);
 
+	printf("qemu init\n");
+
 	//Configure SIGINT
 	if(signal(SIGINT, sig_handler) == SIG_ERR){
 		syslog(LOG_ERR, "Error: Cannot handle SIGINT");
@@ -137,13 +139,13 @@ int main(int argc, char **argv){
 		return -1;
 	}
 	
-	hints.ai_family = AF_INET
+	hints.ai_family = AF_INET;
 	hints.ai_flags = AI_PASSIVE;						//Set the flag to make the socket suitable for bind
-	hints.ai_socketype = SOCK_STREAM
+	hints.ai_socktype = SOCK_STREAM;
 
 	ret = getaddrinfo(NULL, PORT, &hints, &res);		//The returned socket would be suitable for binding and accepting connections
 	if(ret != 0){
-		syslog(LOG_ERR, "getaddrinfo: %s", gai_strerror(ret));
+		syslog(LOG_ERR, "getaddrinfo: %s", gai_strerror(errno));
 		closelog();
 		return -1;
 	}
@@ -170,14 +172,17 @@ int main(int argc, char **argv){
 		ret = bind(fd_socket, p->ai_addr, p->ai_addrlen);
 		if(ret != 1){
 			bind_flag = true;
+			printf("binded\n");
 			break;
 		}
 	}
 
 	if(!bind_flag){
+		printf("Error binding %s\n", strerror(errno));
 		syslog(LOG_ERR, "Error bind: %d - %s", errno, strerror(errno));
 		closelog();
 		close(fd_socket);
+		printf("Error binding %s\n", strerror(errno));
 		return -1;
 	}
 
@@ -193,6 +198,7 @@ int main(int argc, char **argv){
 	
 	ret = listen(fd_socket, MAX_CONNECTIONS);
 	if(ret == -1){
+		printf("Error listening %s\n", strerror(errno));
 		syslog(LOG_ERR, "Error listen: %d", errno);
 		closelog();
 		close(fd_socket);
@@ -202,6 +208,7 @@ int main(int argc, char **argv){
 	//Creating the file to store data over the socket
 	fd = creat(FILE, 0644);
 	if(fd == -1){
+		printf("Error creat %s\n", strerror(errno));
 		syslog(LOG_ERR, "Error Creat: %d", errno);
 		closelog();
 		close(fd_socket);
@@ -212,6 +219,7 @@ int main(int argc, char **argv){
 	//Daemonize after binded to port 9000
 	if((argc == 2) && (strcmp("-d", argv[1]) == 0)){
 		// daemonize();
+		printf("Daemonizing\n");
 		daemon(0,0);
 	}
 
@@ -220,6 +228,7 @@ int main(int argc, char **argv){
 		
 		fd_client = accept(fd_socket, (struct sockaddr *)&peer_addr, &peer_addr_len);
 		if(fd_client == -1){
+			printf("Error accept %s\n", strerror(errno));
 			syslog(LOG_ERR, "Error accept: %d - %s", errno, strerror(errno));
 			perror("accept");
 			closelog();
@@ -229,6 +238,7 @@ int main(int argc, char **argv){
 
 		//Review from here - Delete when reviewed
 		inet_ntop(peer_addr.sin_family, &peer_addr.sin_addr, s, sizeof(s));
+		printf("Connection accepted\n");
 		syslog(LOG_DEBUG, "Accepted connection from %s", s);
 
 		//Open file to append the received data
@@ -239,6 +249,7 @@ int main(int argc, char **argv){
 			//Receive data over socket
 			size_recv = recv(fd_client, buf, sizeof(buf), 0);
 			if(size_recv == -1){
+				printf("Error recv %s\n", strerror(errno));
 				syslog(LOG_ERR, "Error recv: %d", errno);
 				closelog();
 				close(fd_socket);
@@ -260,6 +271,7 @@ int main(int argc, char **argv){
 				if(errno == EINTR){
 					continue;
 				}
+				printf("Error read %s\n", strerror(errno));
 				syslog(LOG_ERR, "Error read: %d", errno);
 				closelog();
 				close(fd_socket);
@@ -271,6 +283,7 @@ int main(int argc, char **argv){
 		close(fd);										//Close file once completely read
 		close(fd_client);								//Close client connection
 		syslog(LOG_DEBUG, "Closed connection from %s", s);
+		printf("connection closed\n");
 	}
 
 	//Close all while existing
