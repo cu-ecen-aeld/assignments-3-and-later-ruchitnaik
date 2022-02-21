@@ -137,7 +137,9 @@ int main(int argc, char **argv){
 		return -1;
 	}
 	
+	hints.ai_family = AF_INET
 	hints.ai_flags = AI_PASSIVE;						//Set the flag to make the socket suitable for bind
+	hints.ai_socketype = SOCK_STREAM
 
 	ret = getaddrinfo(NULL, PORT, &hints, &res);		//The returned socket would be suitable for binding and accepting connections
 	if(ret != 0){
