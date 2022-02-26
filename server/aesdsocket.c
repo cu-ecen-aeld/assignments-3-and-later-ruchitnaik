@@ -39,6 +39,7 @@
 static int fd_socket, fd_client, fd;
 static struct addrinfo *res;								//Pointer to the structure to get struct sockaddr
 pthread_mutex_t w_mutex = PTHREAD_MUTEX_INITIALIZER;		//Initialize mutex to protect the file to be writtern
+pthread_t thread, timethread;								//Threads for timer and cleanup check
 
 typedef struct client_param{
 	pthread_t thread_id;									//Stores thread ID of the accepted client
@@ -84,13 +85,12 @@ void _free_queue(head_t * head)
 }
 
 static void sig_handler(int signo){
-	// if((signo == SIGINT) || (signo == SIGTERM)){
 		syslog(LOG_DEBUG, "Caught signal,exiting");
 		pnode_t *tmp = NULL;
-		int ret = EXIT_SUCCESS;
+		int ret = EXIT_SUCCESS, res;
 		TAILQ_FOREACH(tmp, &ll_head, nodes){
 			//Close all open client fd
-			int res = shutdown(tmp->thread_param.client_fd, SHUT_RDWR);
+			res = shutdown(tmp->thread_param.client_fd, SHUT_RDWR);
 			if(res){
 				syslog(LOG_ERR, "shutdown failed: %s", strerror(errno));
 			}
@@ -102,6 +102,18 @@ static void sig_handler(int signo){
 			}
 		}
 		_free_queue(&ll_head);						//Free the entire queue
+		
+		res = pthread_kill(thread, SIGKILL);
+		if(res){
+			syslog(LOG_ERR, "cleanup thread kill failed: %s", strerror(res));
+			exit(EXIT_FAILURE);
+		}
+
+		res = pthread_kill(timethread, SIGKILL);
+		if(res){
+			syslog(LOG_ERR, "timestamp thread kill failed: %s", strerror(res));
+			exit(EXIT_FAILURE);
+		}
 		
 		pthread_mutex_destroy(&w_mutex);
 		if(fd_socket>0){
@@ -131,8 +143,6 @@ static void sig_handler(int signo){
 		closelog();
 
 		exit(ret);
-	// }
-	// exit(0);
 }
 
 /**
@@ -450,18 +460,8 @@ int main(int argc, char **argv){
 	}
 	printf("listening\n");
 
-	//Creating the file to store data over the socket
-	// fd = creat(FILE, 0644);
-	// if(fd == -1){
-	// 	printf("Error creat %s\n", strerror(errno));
-	// 	syslog(LOG_ERR, "Error Creat: %d", errno);
-	// 	closelog();
-	// 	close(fd_socket);
-	// 	return -1;
-	// }
-	// close(fd);											//Close file after creating it
 	remove(FILE);
-
+	//Creating the file to store data over the socket
 	fd = open(FILE, O_CREAT | O_RDWR | O_APPEND, 0644);
     if (fd == -1)
     {
@@ -480,7 +480,6 @@ int main(int argc, char **argv){
 	TAILQ_INIT(&ll_head);
 
 	//Creating thread for each connection
-	pthread_t thread;
 	ret = pthread_create(&thread, NULL, handle_cleanup, &ll_head);
 	if(ret != 0){
 		syslog(LOG_ERR, "Error: Thread create failed: %s", strerror(errno));
@@ -489,7 +488,6 @@ int main(int argc, char **argv){
 		return -1;
 	}
 
-	pthread_t timethread;
 	ret = pthread_create(&timethread, NULL, handle_timestamp, NULL);
 	if(ret != 0){
 		syslog(LOG_ERR, "Error: Thread create failed: %s", strerror(errno));
