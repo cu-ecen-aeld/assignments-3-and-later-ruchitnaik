@@ -1,15 +1,23 @@
 #native compiler
-CC=gcc
+ifeq ($(CC),)
+	CC=$(CROSSCOMPILE)gcc
+endif
 
 #compilation flags
-CFLAGS=-I -g -Wall -Werror
+ifeq ($(CFLAGS),)
+	CFLAGS=-I -g -Wall -Werror
+endif
+
+ifeq ($(LDFLAGS),)
+	LDFLAGS= -pthread -lrt
+endif
 
 all: aesdsocket
 
 default: aesdsocket
 
-aesdsocket: aesdsocket.o
-			$(CROSS_COMPILE)$(CC) $(CFLAGS) aesdsocket.c -o aesdsocket
+aesdsocket: aesdsocket.c
+	$(CC) $(CFLAGS) $^ -o $@ $(INCLUDES) $(LDFLAGS)
 			
 exec=aesdsocket
 
