@@ -151,7 +151,7 @@ ssize_t aesd_write(struct file *filp, const char __user *buf, size_t count,
 	}
 
 	//copy from user space to kernel space
-	write_count = copy_from_user((void *)(&(dev->entry.buffptr[dev->entry.size])), buf, count);
+	write_count = copy_from_user((void *)(&dev->entry.buffptr[dev->entry.size]), buf, count);
 	//Check the number of bytes actually writtern
 	retval = count - write_count;
 	//Increment the size by the actual number of bytes writtern
@@ -161,7 +161,7 @@ ssize_t aesd_write(struct file *filp, const char __user *buf, size_t count,
 		//newline character spotted. Enqueue only when '\n' received
 		write_entry = aesd_circular_buffer_add_entry(&dev->buf, &dev->entry);		//Enqueue the recevied commands
 		if(write_entry){
-			//Free returned memory once enqueued
+			//Free returned memory if queue is full
 			kfree(write_entry);
 		}
 		dev->entry.buffptr = NULL;
