@@ -109,14 +109,23 @@ const char *aesd_circular_buffer_add_entry(struct aesd_circular_buffer *buffer, 
        pret = buffer->entry[buffer->in_offs].buffptr;
        //Increment the out offset pointer when buffer is full
        buffer->out_offs = (buffer->out_offs + 1) % AESDCHAR_MAX_WRITE_OPERATIONS_SUPPORTED;
+       if(buffer->out_offs == AESDCHAR_MAX_WRITE_OPERATIONS_SUPPORTED){
+           buffer->out_offs = 0;
+       }
    }
    //Writing to the buffer on the input pointer
    buffer->entry[buffer->in_offs] = *add_entry;
    //Increment buffer each time
    buffer->in_offs = (buffer->in_offs + 1) % AESDCHAR_MAX_WRITE_OPERATIONS_SUPPORTED;
+   if(buffer->in_offs == AESDCHAR_MAX_WRITE_OPERATIONS_SUPPORTED){
+       buffer->in_offs = 0;
+   }
    //managing the wrap around conditions
    if((buffer->in_offs == buffer->out_offs) && (!buffer->full)){
         buffer->full = true;
+   }
+   else{
+       buffer->full = false;
    }
    return pret;
 }
