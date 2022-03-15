@@ -59,8 +59,8 @@ ssize_t aesd_read(struct file *filp, char __user *buf, size_t count,
 	ssize_t retval = 0;
 	struct aesd_dev *dev = (struct aesd_dev *)filp->private_data;
 	struct aesd_buffer_entry *pPos = NULL;		//Pointer to the position returned by function
-	ssize_t entry_offset;						//stores the offset value from where command is to be read
-	ssize_t read_count;							//Stores the count of number of characters read
+	size_t entry_offset = 0;						//stores the offset value from where command is to be read
+	size_t read_count = 0;							//Stores the count of number of characters read
 	ssize_t unread_count;						//Stores the number of bytes left to be read, if any
 	PDEBUG("read %zu bytes with offset %lld",count,*f_pos);
 	/**
