@@ -72,6 +72,15 @@ ssize_t aesd_read(struct file *filp, char __user *buf, size_t count,
 	}
 
 	if(filp == NULL || buf == NULL || f_pos == NULL){
+		if(buf == NULL){
+			PDEBUG("buff passed null");
+		}
+		else if(filp == NULL){
+			PDEBUG("filp passed null");
+		}
+		else{
+			PDEBUG("f_pos passed null");
+		}
 		//Passing NULL pointer
 		return -EFAULT;
 	}
@@ -121,6 +130,15 @@ ssize_t aesd_write(struct file *filp, const char __user *buf, size_t count,
 		return 0;
 	}
 	if(filp == NULL || buf == NULL || f_pos == NULL){
+		if(buf == NULL){
+			PDEBUG("buff passed null");
+		}
+		else if(filp == NULL){
+			PDEBUG("filp passed null");
+		}
+		else{
+			PDEBUG("f_pos passed null");
+		}
 		//Passing NULL pointer
 		return -EFAULT;
 	}
