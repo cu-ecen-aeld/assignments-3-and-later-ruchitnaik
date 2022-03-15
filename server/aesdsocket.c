@@ -31,25 +31,31 @@
 #include <sys/queue.h>
 #include <sys/socket.h>
 
-#define PORT				"9000"
-#define MAX_CONNECTIONS		10								//Number of pending requests being queued
-#define MAXDATALEN			1024							//Maximum permissible data to be received over socket
-#define FILE				"/var/tmp/aesdsocketdata"		//File path where the received data is to be received
+#define PORT					"9000"
+#define MAX_CONNECTIONS			10								//Number of pending requests being queued
+#define MAXDATALEN				1024							//Maximum permissible data to be received over socket
+
+#define USE_AESD_CHAR_DEVICE	1								//Build switch macro for assignment 8
+#if (USE_AESD_CHAR_DEVICE == 1)
+#define FILE				"/dev/aesdchar"						//File path where the received data is to be received
+#else
+#define FILE				"/var/tmp/aesdsocketdata"			//File path where the received data is to be received
+#endif
 
 static int fd_socket, fd_client, fd;
-static struct addrinfo *res;								//Pointer to the structure to get struct sockaddr
-pthread_mutex_t w_mutex = PTHREAD_MUTEX_INITIALIZER;		//Initialize mutex to protect the file to be writtern
-pthread_t thread, timethread;								//Threads for timer and cleanup check
+static struct addrinfo *res;									//Pointer to the structure to get struct sockaddr
+pthread_mutex_t w_mutex = PTHREAD_MUTEX_INITIALIZER;			//Initialize mutex to protect the file to be writtern
+pthread_t thread, timethread;									//Threads for timer and cleanup check
 
 typedef struct client_param{
-	pthread_t thread_id;									//Stores thread ID of the accepted client
-	int client_fd;											//Stores client file descriptor for the client
+	pthread_t thread_id;										//Stores thread ID of the accepted client
+	int client_fd;												//Stores client file descriptor for the client
 	bool exec_flag;
 }client_param_t;
 
 typedef struct node{
-	client_param_t thread_param;							//Stores all the necessary parameters for a client thread
-	TAILQ_ENTRY(node) nodes;								//Pointer to next node of the list
+	client_param_t thread_param;								//Stores all the necessary parameters for a client thread
+	TAILQ_ENTRY(node) nodes;									//Pointer to next node of the list
 }pnode_t;
 
 typedef TAILQ_HEAD(head_s, node) head_t;
@@ -317,6 +323,7 @@ void *handle_Thread(void* pthread_arg){
 	return NULL;
 }
 
+#if (USE_AESD_CHAR_DEVICE == 1)
 void *handle_timestamp(void *timer_arg){
 	while(1){
 		time_t time_ret;
@@ -368,6 +375,7 @@ void *handle_timestamp(void *timer_arg){
 		sleep(10);										//Sleep for 10 secs to get next timestamp
 	}
 }
+#endif
 
 int main(int argc, char **argv){
 	int yes = 1;
@@ -488,6 +496,7 @@ int main(int argc, char **argv){
 		return -1;
 	}
 
+#if (USE_AESD_CHAR_DEVICE == 1)
 	ret = pthread_create(&timethread, NULL, handle_timestamp, NULL);
 	if(ret != 0){
 		syslog(LOG_ERR, "Error: Thread create failed: %s", strerror(errno));
@@ -495,6 +504,7 @@ int main(int argc, char **argv){
 		close(fd_socket);
 		return -1;
 	}
+#endif
 
 	while(1){											
 		//accept loop to listen forever		

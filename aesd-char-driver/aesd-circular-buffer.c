@@ -57,7 +57,7 @@ struct aesd_buffer_entry *aesd_circular_buffer_find_entry_offset_for_fpos(struct
     }
 
     //traversing thorugh the buffer to check the offset
-    int pread = buffer->out_offs;           //Start reading from out pointer
+    uint8_t pread = buffer->out_offs;           //Start reading from out pointer
     int count = 0;
     while(count < nElements){
         if(char_offset < buffer->entry[pread].size){
@@ -84,27 +84,29 @@ struct aesd_buffer_entry *aesd_circular_buffer_find_entry_offset_for_fpos(struct
 * Any necessary locking must be handled by the caller
 * Any memory referenced in @param add_entry must be allocated by and/or must have a lifetime managed by the caller.
 */
-void aesd_circular_buffer_add_entry(struct aesd_circular_buffer *buffer, const struct aesd_buffer_entry *add_entry)
+const char *aesd_circular_buffer_add_entry(struct aesd_circular_buffer *buffer, const struct aesd_buffer_entry *add_entry)
 {
     /**
     * TODO: implement per description 
     */
+   const char *pret = NULL;
    //Handling error cases below
    //Check if any of the input parameter pointer is NULL
    if(buffer == NULL){
-       return;
+       return pret;
    }
    if(add_entry == NULL){
-       return;
+       return pret;
    }
    //Check if any of the element of the pointer to the buffer structure is NULL or 0
    if(add_entry->buffptr == NULL){
-       return;
+       return pret;
    }
    if(add_entry->size == 0){
-       return;
+       return pret;
    }
    if(buffer->full){
+       pret = buffer->entry[buffer->out_offs].buffptr;
        //Increment the out offset pointer when buffer is full
        buffer->out_offs++;
    }
@@ -116,6 +118,7 @@ void aesd_circular_buffer_add_entry(struct aesd_circular_buffer *buffer, const s
    if((buffer->in_offs == buffer->out_offs) && (!buffer->full)){
         buffer->full = true;
    }
+   return pret;
 }
 
 /**
