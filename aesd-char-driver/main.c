@@ -83,7 +83,7 @@ ssize_t aesd_read(struct file *filp, char __user *buf, size_t count,
 	}
 
 	//find the position to read from
-	aesd_circular_buffer_find_entry_offset_for_fpos(&dev->buf, *f_pos, &entry_offset);
+	pPos = aesd_circular_buffer_find_entry_offset_for_fpos(&dev->buf, *f_pos, &entry_offset);
 	if(pPos == NULL){
 		//In case if no matching entry found
 		goto out;								//Error case, jump to cleanup section
@@ -133,7 +133,7 @@ ssize_t aesd_write(struct file *filp, const char __user *buf, size_t count,
 
 	if(dev->entry.size == 0){
 		//Allocate the buffer for the first time
-		dev->entry.buffptr = kmalloc((sizeof(char) * count), GFP_KERNEL);
+		dev->entry.buffptr = kmalloc((sizeof(char)*count), GFP_KERNEL);
 
 		if(dev->entry.buffptr == NULL){
 			PDEBUG("Error in initial allocation");
@@ -151,16 +151,16 @@ ssize_t aesd_write(struct file *filp, const char __user *buf, size_t count,
 	}
 
 	//copy from user space to kernel space
-	write_count = copy_from_user((void *)&(dev->entry.buffptr[dev->entry.size]), buf, count);
+	write_count = copy_from_user((void *)(&(dev->entry.buffptr[dev->entry.size])), buf, count);
 	//Check the number of bytes actually writtern
 	retval = count - write_count;
 	//Increment the size by the actual number of bytes writtern
 	dev->entry.size += retval;
 
-	if(strchr(dev->entry.buffptr, '\n') != NULL){
+	if(memchr(dev->entry.buffptr, '\n', dev->entry.size)){
 		//newline character spotted
 		write_entry = aesd_circular_buffer_add_entry(&dev->buf, &dev->entry);		//Enqueue the recevied commands
-		if(write_entry != NULL){
+		if(write_entry){
 			//Free returned memory once enqueued
 			kfree(write_entry);
 		}
