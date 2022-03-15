@@ -78,7 +78,7 @@ ssize_t aesd_read(struct file *filp, char __user *buf, size_t count,
 
 	//acquire interruptible mutex
 	if(mutex_lock_interruptible(&aesd_device.charMutex) != 0){
-		PDEBUG("Failed to acuire mutex");
+		PDEBUG("Failed to acquire mutex");
 		return -ERESTARTSYS;
 	}
 
@@ -158,7 +158,7 @@ ssize_t aesd_write(struct file *filp, const char __user *buf, size_t count,
 	dev->entry.size += retval;
 
 	if(memchr(dev->entry.buffptr, '\n', dev->entry.size)){
-		//newline character spotted
+		//newline character spotted. Enqueue only when '\n' received
 		write_entry = aesd_circular_buffer_add_entry(&dev->buf, &dev->entry);		//Enqueue the recevied commands
 		if(write_entry){
 			//Free returned memory once enqueued

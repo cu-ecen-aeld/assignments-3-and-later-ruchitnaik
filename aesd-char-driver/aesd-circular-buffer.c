@@ -106,7 +106,7 @@ const char *aesd_circular_buffer_add_entry(struct aesd_circular_buffer *buffer, 
        return pret;
    }
    if(buffer->full){
-       pret = buffer->entry[buffer->out_offs].buffptr;
+       pret = buffer->entry[buffer->in_offs].buffptr;
        //Increment the out offset pointer when buffer is full
        buffer->out_offs++;
    }
