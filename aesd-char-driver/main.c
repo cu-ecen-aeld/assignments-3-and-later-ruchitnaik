@@ -100,14 +100,15 @@ ssize_t aesd_read(struct file *filp, char __user *buf, size_t count,
 
 	//Calculate number of bytes read
 	read_count = pPos->size - entry_offset;
-	if(count > read_count){
+	if(read_count > count){
 		//limit the count if it exceed the read count
-		count = read_count;
+		read_count = count;
 	}
 
 	//Copy from kernel space into user space
 	unread_count = copy_to_user(buf, (pPos->buffptr+entry_offset), read_count);
-	retval = count - unread_count;				//amount of data is read successfully
+	// retval = count - unread_count;				//amount of data is read successfully
+	retval = read_count;
 	*f_pos += retval;							//update the pointer to point to next command in the queue
 out:
 	mutex_unlock(&aesd_device.charMutex);			//Unlock the mutex on each exit
