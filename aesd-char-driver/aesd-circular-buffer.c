@@ -57,7 +57,7 @@ struct aesd_buffer_entry *aesd_circular_buffer_find_entry_offset_for_fpos(struct
     }
 
     //traversing thorugh the buffer to check the offset
-    uint8_t pread = buffer->out_offs;           //Start reading from out pointer
+    int pread = buffer->out_offs;           //Start reading from out pointer
     int count = 0;
     while(count < nElements){
         if(char_offset < buffer->entry[pread].size){
@@ -89,7 +89,7 @@ const char *aesd_circular_buffer_add_entry(struct aesd_circular_buffer *buffer, 
     /**
     * TODO: implement per description 
     */
-   const char *pret = NULL;
+   const char* pret = NULL;
    //Handling error cases below
    //Check if any of the input parameter pointer is NULL
    if(buffer == NULL){
