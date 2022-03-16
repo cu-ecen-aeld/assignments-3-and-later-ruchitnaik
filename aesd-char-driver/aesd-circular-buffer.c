@@ -114,7 +114,7 @@ const char *aesd_circular_buffer_add_entry(struct aesd_circular_buffer *buffer, 
    }
    //Writing to the buffer on the input pointer
    buffer->entry[buffer->in_offs] = *add_entry;
-   printk(KERN_INFO "in[%d] out[%d] [%p]\n", buffer->in_offs, buffer->out_offs, add_entry);
+//    printk(KERN_INFO "in[%d] out[%d] [%p]\n", buffer->in_offs, buffer->out_offs, add_entry);
    //Increment buffer each time
    buffer->in_offs = (buffer->in_offs + 1) % AESDCHAR_MAX_WRITE_OPERATIONS_SUPPORTED;
    //managing the wrap around conditions
