@@ -153,12 +153,13 @@ ssize_t aesd_write(struct file *filp, const char __user *buf, size_t count,
 	if(dev->entry.size == 0){
 		//Allocate the buffer for the first time
 		dev->entry.buffptr = kmalloc((sizeof(char)*count), GFP_KERNEL);
-
+		
 		if(dev->entry.buffptr == NULL){
 			PDEBUG("Error in initial allocation");
 			retval = -ENOMEM;
 			goto clear;
 		}
+		memset(dev->entry.buffptr, 0, sizeof(char)*count);
 	}
 	else{
 		//if already allocated
@@ -177,19 +178,24 @@ ssize_t aesd_write(struct file *filp, const char __user *buf, size_t count,
 	//Increment the size by the actual number of bytes writtern
 	dev->entry.size += count;
 
-	if(strchr(dev->entry.buffptr, '\n') != NULL){
-		//newline character spotted. Enqueue only when '\n' received
-		write_entry = aesd_circular_buffer_add_entry(&dev->buf, &dev->entry);		//Enqueue the recevied commands
-		if(write_entry){
-			//Free returned memory if queue is full
-			kfree(write_entry);
+	int i;
+	for (i = 0; i < dev->entry.size; i++)
+	{
+		if(dev->entry.buffptr[i] == '\n'){
+			//newline character spotted. Enqueue only when '\n' received
+			write_entry = aesd_circular_buffer_add_entry(&dev->buf, &dev->entry);		//Enqueue the recevied commands
+			if(write_entry){
+				//Free returned memory if queue is full
+				kfree(write_entry);
+			}
+			dev->entry.buffptr = NULL;
+			dev->entry.size = 0;
 		}
-		dev->entry.buffptr = NULL;
-		dev->entry.size = 0;
 	}
 
 clear:
 	mutex_unlock(&aesd_device.charMutex);			//Unlock the mutex on each exit
+	*f_pos = 0;
 	return retval;
 }
 struct file_operations aesd_fops = {
