@@ -235,6 +235,15 @@ void *handle_Thread(void* pthread_arg){
 	int size_recv, ret;
 	client_param_t* thread_param_tmp = pthread_arg;
 	char  buf[MAXDATALEN];										//Buffer to send and receive data
+	char *pbuf = NULL;
+	ssize_t remainingSpace = sizeof(buf);
+	int pos = 0;
+
+	pbuf = (char *)malloc(sizeof(char)*MAXDATALEN);					//Allocate buffer size
+	if(buf == NULL){
+		syslog(LOG_ERR, "malloc failed");
+		exit(EXIT_FAILURE);
+	}
 
 	// syslog(LOG_DEBUG, "Thread %d in eecution", thread_param_tmp->thread_id);
 	printf("Thread %ld in execution with client fd: %d\n", thread_param_tmp->thread_id, thread_param_tmp->client_fd);
@@ -268,20 +277,33 @@ void *handle_Thread(void* pthread_arg){
 			// close(thread_param_tmp->client_fd);
 			pthread_exit(NULL);
 		}
-		printf("%s\n", buf);
-		ret = write(fd, buf, size_recv);
-		if(ret == -1){
-			syslog(LOG_ERR, "write failed: %s", strerror(errno));
-			printf("write filed: %s\n", strerror(errno));
-			ret = pthread_mutex_unlock(&w_mutex);		//Unlock the mutex after file written
-			if(ret != 0){
-				syslog(LOG_ERR, "Unable to unlock %s", strerror(errno));
+
+		if(size_recv > remainingSpace){
+			pbuf = (char *)realloc(pbuf, sizeof(char)*(pos + MAXDATALEN));
+			if(pbuf == NULL){
+				syslog(LOG_ERR, "reallocation failed");
 			}
-			printf("mutex unlocked\n");
+			remainingSpace += remainingSpace;
 		}
+		memcpy(&pbuf[pos], buf, size_recv);
+		pos += size_recv;
+		remainingSpace -= size_recv;
+
+		printf("%s\n", buf);
 		if(buf[size_recv-1] == '\n'){
 			break;										//Break the while loop if 'EOL received', indicating end of packet
 		}
+	}
+
+	ret = write(fd, pbuf, pos);
+	if(ret == -1){
+		syslog(LOG_ERR, "write failed: %s", strerror(errno));
+		printf("write filed: %s\n", strerror(errno));
+		ret = pthread_mutex_unlock(&w_mutex);		//Unlock the mutex after file written
+		if(ret != 0){
+			syslog(LOG_ERR, "Unable to unlock %s", strerror(errno));
+		}
+		printf("mutex unlocked\n");
 	}
 
 	close(fd);											//Close file once received data is completelty transfered
@@ -308,11 +330,12 @@ void *handle_Thread(void* pthread_arg){
 		}
 	}
 
+	free(pbuf);											//Free allocated buffer once done with the thread
 	thread_param_tmp->exec_flag = true;					//Flag set to indicate thread had finished execution
 	thread_param_tmp->client_fd = -1;					//Indication for the queue that fd is closed
 
 	close(fd);											//Close file once completely read
-	// close(fd_client);									//Close client connection
+	// close(fd_client);								//Close client connection
 	syslog(LOG_DEBUG, "Connection closed");
 	printf("%s: connection closed\n", __func__);
 	ret = pthread_mutex_unlock(&w_mutex);				//Unlock the mutex after file written
