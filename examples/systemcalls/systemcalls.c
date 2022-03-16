@@ -1,4 +1,9 @@
 #include "systemcalls.h"
+#include "sys/wait.h"
+#include "sys/types.h"
+#include "fcntl.h"
+#include "unistd.h"
+#include "stdlib.h"
 
 /**
  * @param cmd the command to execute with system()
@@ -16,7 +21,13 @@ bool do_system(const char *cmd)
  *   and return a boolean true if the system() call completed with success 
  *   or false() if it returned a failure
 */
-
+    int ret;
+    
+    ret = system(cmd);
+    if(ret != 0){
+    	return false;
+    }
+    
     return true;
 }
 
@@ -58,6 +69,43 @@ bool do_exec(int count, ...)
  *   as second argument to the execv() command.
  *   
 */
+    int status;
+    int ret;
+    pid_t pid;
+    
+    pid = fork();
+    if(pid == -1){
+    	//Error while fork
+    	perror("fork");
+    	exit(-1);
+    }
+    else if(pid == 0){
+    	//if this is the child process - Fork successful
+    	ret = execv(command[0], command);	//Returns -1 on error
+    	if(ret != 0){
+    		perror("execv");
+    		exit(-1);
+    	}
+    }
+    else{
+    	ret = waitpid(pid, &status, 0);
+    	if(ret == -1){
+    		perror("waitpid");
+    		return false;
+    	}
+    	if(WIFEXITED(status)){
+    		//Child process not terminated normally
+    		
+    		if(WEXITSTATUS(status) == EXIT_SUCCESS)
+    		{
+    			return true;
+    		}
+    		else
+    		{
+    			return false;
+    		}
+    	}
+    }
 
     va_end(args);
 
@@ -92,7 +140,57 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
  *   The rest of the behaviour is same as do_exec()
  *   
 */
-
+    int status;
+    int ret;
+    pid_t pid;
+    int fd = open(outputfile, O_WRONLY|O_TRUNC|O_CREAT, 0644);
+    if(fd < 0){
+    	perror("open");
+    	return false;
+    }
+    
+    //execv routine
+    pid = fork();
+    if(pid == -1){
+    	//Error while fork
+    	perror("Error: fork");
+    	exit(-1);
+    }
+    else if(pid == 0){
+    	//if this is the child process - Fork successful
+    	if(dup2(fd, 1) < 0){
+    		perror("dup2");
+    		return false;
+    	}
+    	
+    	close(fd);				//Close file before executing child process
+    	
+    	ret = execv(command[0], command);	//Returns -1 on error
+    	if(ret != 0){
+    		perror("execv");
+    		exit(-1);
+    	}
+    }
+    else{
+    	close(fd);
+    	ret = waitpid(pid, &status, 0);
+    	if(ret == -1){
+    		perror("waitpid");
+    		return false;
+    	}
+    	if(WIFEXITED(status)){
+    		//Child process not terminated normally
+    		if(WEXITSTATUS(status) == EXIT_SUCCESS)
+    		{
+    			return true;
+    		}
+    		else
+    		{
+    			return false;
+    		}
+    	}
+    }
+    
     va_end(args);
     
     return true;
