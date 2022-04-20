@@ -10,6 +10,8 @@
 
 #ifdef __KERNEL__
 #include <linux/string.h>
+#include <linux/module.h>
+#include <linux/printk.h>
 #else
 #include <string.h>
 #endif
@@ -84,38 +86,42 @@ struct aesd_buffer_entry *aesd_circular_buffer_find_entry_offset_for_fpos(struct
 * Any necessary locking must be handled by the caller
 * Any memory referenced in @param add_entry must be allocated by and/or must have a lifetime managed by the caller.
 */
-void aesd_circular_buffer_add_entry(struct aesd_circular_buffer *buffer, const struct aesd_buffer_entry *add_entry)
+const char *aesd_circular_buffer_add_entry(struct aesd_circular_buffer *buffer, const struct aesd_buffer_entry *add_entry)
 {
     /**
     * TODO: implement per description 
     */
+   const char* pret = NULL;
    //Handling error cases below
    //Check if any of the input parameter pointer is NULL
    if(buffer == NULL){
-       return;
+       return pret;
    }
    if(add_entry == NULL){
-       return;
+       return pret;
    }
    //Check if any of the element of the pointer to the buffer structure is NULL or 0
    if(add_entry->buffptr == NULL){
-       return;
+       return pret;
    }
    if(add_entry->size == 0){
-       return;
+       return pret;
    }
    if(buffer->full){
+       pret = buffer->entry[buffer->in_offs].buffptr;
        //Increment the out offset pointer when buffer is full
-       buffer->out_offs++;
+       buffer->out_offs = (buffer->out_offs + 1) % AESDCHAR_MAX_WRITE_OPERATIONS_SUPPORTED;
    }
    //Writing to the buffer on the input pointer
    buffer->entry[buffer->in_offs] = *add_entry;
+//    printk(KERN_INFO "in[%d] out[%d] [%p]\n", buffer->in_offs, buffer->out_offs, add_entry);
    //Increment buffer each time
    buffer->in_offs = (buffer->in_offs + 1) % AESDCHAR_MAX_WRITE_OPERATIONS_SUPPORTED;
    //managing the wrap around conditions
    if((buffer->in_offs == buffer->out_offs) && (!buffer->full)){
         buffer->full = true;
    }
+   return pret;
 }
 
 /**
